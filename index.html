@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>dsd</title>
+	<style type="text/css">
+			#map {
+		  height: 400px
+		}
+	</style>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+	
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script type="text/javascript" src="betterWMS.js"></script>
+
+	<script type="text/javascript">
+
+		$(function(){
+			
+			var map = L.map('map', {
+			  scrollWheelZoom: true,
+			  center: [37.090240, -95.712891],
+			  zoom: 12,
+			  maxZoom: 30
+			});
+
+			var basemap = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+			  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			});
+			map.addLayer(basemap);
+
+			var singleWMS = L.tileLayer.betterWms("http://localhost:8080/geoserver/fundae/wms?", {
+			    layers: 'fundae:entity_geocode_2',
+			    format: 'image/png',
+			    transparent: true,
+			    maxZoom: 30
+			});
+			map.addLayer(singleWMS);
+
+			var combinedWMS = L.tileLayer.betterWms("http://localhost:8080/geoserver/fundae/wms?", {
+			    layers: 'fundae:cb_2015_us_state_20m',
+			    format: 'image/png',
+			    transparent: true,
+			    maxZoom: 30
+			});
+			//map.addLayer(combinedWMS);
+			
+		});
+</script>
+</head>
+<body>
+
+Geo Server Example
+<div id="map">
+</div> 
+
+
+
+</body>
+</html>
+
