@@ -4,14 +4,25 @@
 	<title>dsd</title>
 	<style type="text/css">
 			#map {
-		  height: 400px
+		  		height: 100vh
 		}
 	</style>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
-	
+
+	<!-- stylesheet -->
+	<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="bower_components/leaflet-draw/dist/leaflet.draw.css">
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+	<link rel="stylesheet" href="bower_components/leaflet-search/dist/leaflet-search.min.css" />
+	<!-- stylesheet -->
+
+	<!-- javascript -->
+	<script src="bower_components/jquery/dist/jquery.min.js"></script>
+	<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
     <script type="text/javascript" src="betterWMS.js"></script>
+    <script src="bower_components/leaflet-draw/dist/leaflet.draw.js"></script>
+    <script src="bower_components/leaflet-search/dist/leaflet-search.min.js"></script>
+    <!-- javascript -->
 
 	<script type="text/javascript">
 
@@ -21,16 +32,63 @@
 			  scrollWheelZoom: true,
 			  center: [37.090240, -95.712891],
 			  zoom: 12,
-			  maxZoom: 30
+			  maxZoom: 30,
+			  layers : []
+			  
 			});
+
+			addControls = function() {
+
+		        var drawControl = new L.Control.Draw({
+		            draw : {
+		                polyline : false,
+		                polygon : false,
+		                rectangle : false,
+		                marker : false,
+		                circle : {
+		                  metric : true
+		                }
+
+		            }
+		        });
+		        map.addControl(drawControl);
+		    };
+
+		    addControls();
 
 			var basemap = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
 			  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 			});
+
 			map.addLayer(basemap);
 
+
+			//openstreetmap
+			var mbAttr = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+			var grayscale   = L.tileLayer(mbUrl, {id: 'mapbox.light', attribution: mbAttr}),
+				streets  = L.tileLayer(mbUrl, {id: 'mapbox.streets',   attribution: mbAttr});
+
+			
+			//google maps		
+			var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+			    maxZoom: 20,
+			    subdomains:['mt0','mt1','mt2','mt3']
+			});	
+
+			googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',{
+			    maxZoom: 20,
+			    subdomains:['mt0','mt1','mt2','mt3']
+			});
+
+
+			
+			//layers	
 			var singleWMS = L.tileLayer.betterWms("http://localhost:8080/geoserver/fundae/wms?", {
-			    layers: 'fundae:entity_geocode_2',
+			    layers: 'fundae:fundae',
 			    format: 'image/png',
 			    transparent: true,
 			    maxZoom: 30
@@ -38,19 +96,75 @@
 			map.addLayer(singleWMS);
 
 			var combinedWMS = L.tileLayer.betterWms("http://localhost:8080/geoserver/fundae/wms?", {
-			    layers: 'fundae:cb_2015_us_state_20m',
+			    layers: 'fundae:fundae_territory1',
 			    format: 'image/png',
 			    transparent: true,
 			    maxZoom: 30
 			});
-			//map.addLayer(combinedWMS);
+			map.addLayer(combinedWMS);
+
+			var combinedWMS1 = L.tileLayer.betterWms("http://localhost:8080/geoserver/fundae/wms?", {
+			    layers: 'fundae:CA view',
+			    format: 'image/png',
+			    transparent: true,
+			    maxZoom: 30
+			});
+			map.addLayer(combinedWMS1);
+
+			//layer control
+			var overlays = {
+			    "Point Layer": singleWMS,
+			    "Territory layer": combinedWMS,
+			    "Single region layer": combinedWMS1
+			};
+
+			var baseMaps = {
+			    "Grayscale": grayscale,
+			    "Streets": streets,
+			    "Satelite":googleSat,
+			    "Terrain":googleTerrain
+			};
 			
+			L.control.layers(baseMaps, overlays).addTo(map);
+
+
+			//search
+			/*var searchLayer = L.layerGroup([singleWMS]).addTo(map);
+			//... adding data in searchLayer ...
+			map.addControl( new L.Control.Search({layer: searchLayer}) );*/
+
+			map.addControl( new L.Control.Search({
+				url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
+				jsonpParam: 'json_callback',
+				propertyName: 'display_name',
+				propertyLoc: ['lat','lon'],
+				marker: L.circleMarker([0,0],{radius:30}),
+				autoCollapse: true,
+				autoType: false,
+				minLength: 2
+			}) );
+
+
+			//print
+
+			var printProvider = L.print.provider({
+			   method: 'GET',
+			   url: 'http://localhost:8080/geoserver/print',
+			   autoLoad: true,
+			   dpi: 90
+			});
+
+			var printControl = L.control.print({
+			   provider: printProvider
+			});        
+			map.addControl(printControl);	
+
+
 		});
 </script>
 </head>
 <body>
 
-Geo Server Example
 <div id="map">
 </div> 
 
