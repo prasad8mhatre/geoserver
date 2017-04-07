@@ -104,10 +104,11 @@
 			map.addLayer(combinedWMS);
 
 			var combinedWMS1 = L.tileLayer.betterWms("http://localhost:8080/geoserver/fundae/wms?", {
-			    layers: 'fundae:CA view',
+			    layers: 'fundae:CAview',
 			    format: 'image/png',
 			    transparent: true,
-			    maxZoom: 30
+			    maxZoom: 30,
+			    viewparams:"name:CA"
 			});
 			map.addLayer(combinedWMS1);
 
@@ -127,6 +128,10 @@
 			
 			L.control.layers(baseMaps, overlays).addTo(map);
 
+			/*L.layerGroup([singleWMS, combinedWMS])
+			    .addLayer(polyline)
+			    .addTo(map);*/
+
 
 			//search
 			/*var searchLayer = L.layerGroup([singleWMS]).addTo(map);
@@ -145,19 +150,24 @@
 			}) );
 
 
-			//print
 
-			var printProvider = L.print.provider({
-			   method: 'GET',
-			   url: 'http://localhost:8080/geoserver/print',
-			   autoLoad: true,
-			   dpi: 90
-			});
+			
 
-			var printControl = L.control.print({
-			   provider: printProvider
-			});        
-			map.addControl(printControl);	
+
+				//print
+
+				/*var printProvider = L.print.provider({
+				   method: 'GET',
+				   url: 'http://localhost:8080/geoserver/print',
+				   autoLoad: true,
+				   dpi: 90
+				});
+
+				var printControl = L.control.print({
+				   provider: printProvider
+				});        
+				map.addControl(printControl);	*/
+
 
 
 		});
